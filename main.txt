@@ -1,0 +1,89 @@
+from fastapi import FastAPI , UploadFile , File, Request # Import Request for slowapi
+import os
+
+import shutil
+
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter # Import Limiter
+
+from slowapi.util import get_remote_address # Import get_remote_address
+
+
+
+
+app = FastAPI()
+
+
+UPLOAD_DIR ="uploads"
+
+os.makedirs(UPLOAD_DIR,exist_ok=True)
+
+
+
+# Configure CORS middleware at the app level
+app.add_middleware(
+    
+          CORSMiddleware,
+ 
+            allow_origins=["*"],
+    
+          allow_methods=["*"],
+      
+          allow_headers=["*"],
+
+)
+
+
+
+# Initialize Limiter globally
+
+limiter = Limiter(key_func=get_remote_address)
+
+
+
+# Define allowed extensions globally
+
+ALLOWED_EXTENSIONS = [".mp3",".wav",".m4a"] # Corrected .mp*3 to .mp3
+
+
+
+@app.post("/uploads-audio/") # Removed space from endpoint
+
+@limiter.limit("5/minute") # Apply the decorator for rate limiting
+
+
+async def uploads_audio(request: Request, file: UploadFile = File(...)): # Renamed parameter and added request
+  
+
+# Validate file type at the beginning of the function
+  
+if not any(file.filename.endswith(ext) for ext in ALLOWED_EXTENSIONS): # Fixed syntax: 'from' to 'for'
+    
+
+return {"error":"Invalid file type"}
+
+  
+MAX_SIZE = 10 * 1024 * 1024 #10MB
+  contents = await file.read() # Read contents for size check
+ 
+ if len(contents) > MAX_SIZE:
+   
+ return {"error":"file too large"}
+
+  
+
+file_path = f"{UPLOAD_DIR}/{file.filename}"
+
+
+  
+with open(file_path,"wb") as buffer:
+    buffer.write(contents) # Write contents from memory, as file.read() consumes the stream
+
+
+  
+return{
+     
+    "message":"File uploaded successfully",
+         "filename":file.filename
+ 
+ }
