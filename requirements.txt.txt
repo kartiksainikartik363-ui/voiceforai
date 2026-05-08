@@ -1,6 +1,8 @@
-fastapi
-uvicorn
-python-multipart
-slowapi
-python-dotenv
-aiofiles
+%%writefile requirements.txt
+
+fastapi==0.115.0
+unicorn==0.30.6
+python-multipart==0.0.9
+slowapi==0.1.9
+python-dotenv==1.0.1
+aiofiles==24.1.0
